@@ -9,17 +9,31 @@ public class ClassLib : MonoBehaviour
 public class Operation
 {
     public int ActorsCount { get; set; }
-    public int Date { get; set; }
+    public int Date { get; set; }  //dhhmm
+    public int index { get; set; }
     public string Location { get; set; }
+    public OPtype type;
 
     public Operation(){ }
-
+    public Operation(int ActorsCount, int date, int t)
+    {
+        this.ActorsCount = ActorsCount;
+        this.Date = date;
+        this.type = (OPtype) t;
+    }
     public Operation( int ActorsCount, int date, string loc)
     {
         this.ActorsCount = ActorsCount;
         this.Date = date;
         this.Location = loc;
     }
+
+    public enum OPtype 
+    {   
+        DEAL,
+        RAID 
+    }
+
 }
 
     public class Actor 
@@ -47,13 +61,18 @@ public class Team
     public Actor Boss { get; set; }
 
     public int AdvancePoints { get; set; }
-    public Operation NextOperation { get; set; }
-    public Operation EnemyInputNextOp { get; set; }
+    //public Operation NextOp { get; set; }
+    public Operation OperationPlanned { get; set; }
+    public int CurrentOPIndex { get; set; }
+    public bool HasIntel { get; set; }
+    //public Operation EnemyInputNextOp { get; set; }
 
     // Start is called before the first frame update
     public Team()
     {
         AdvancePoints = 0;
+        HasIntel = false;
+        CurrentOPIndex = 0;
         Actors = new Actor[6];
     }
 
@@ -64,7 +83,10 @@ public class Team
 public enum PlayerState
 { 
         ACTORCHOICE,
-        READY,
-        THINKING,
+        PREOPERATION,
+        ONOPERATION,
+        OFFOPERATION,
+        MEETINGBOSS,
+        POSTOPERATION,
         NONE
 }

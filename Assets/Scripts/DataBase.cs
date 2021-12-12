@@ -9,16 +9,14 @@ public class DataBase
     public Actor[] mobActors;
     public Actor Mboss;
 
-    public Operation[] DealOpsMob;
-    public Operation[] DealOpsPolice;
+    public Operation[] DealOps;
 
-    public Operation[] RaidOpsPolice;
-    public Operation[] RaidOpsMob;
+    public Operation[] RaidOps;
 
     public DataBase()
     {
         //Police station
-        stationActors = new Actor[6];
+        stationActors = new Actor[7];
         Actor pactor1 = new Actor("Mary", " Cotton");
         Actor pactor2 = new Actor("Ben", " Waller");
         Actor pactor3 = new Actor("Wendy", " Morgan");
@@ -28,16 +26,23 @@ public class DataBase
         Pboss = new Actor("Francis", " Verga");
 
         //add to array
-        stationActors[0] = pactor1;
-        stationActors[1] = pactor2;
-        stationActors[2] = pactor3;
-        stationActors[3] = pactor4;
-        stationActors[4] = pactor5;
-        stationActors[5] = pactor6;
+        stationActors[0] = Pboss;
+        stationActors[1] = pactor1;
+        stationActors[2] = pactor2;
+        stationActors[3] = pactor3;
+        stationActors[4] = pactor4;
+        stationActors[5] = pactor5;
+        stationActors[6] = pactor6;
+
+        //assign keys:
+        int i = 0;
+        Pboss.Key = 0;
+        foreach (Actor a in stationActors)
+        { a.Key = ++i; }
 
 
         //Mob
-        mobActors = new Actor[6];
+        mobActors = new Actor[7];
         Actor mactor1 = new Actor("Anna", " Cox");
         Actor mactor2 = new Actor("Eric ", "Sagalski");
         Actor mactor3 = new Actor("Sophie ", "Rothstein");
@@ -47,50 +52,56 @@ public class DataBase
          Mboss = new Actor("Charles ", "Hess");
 
         //add to array
-        mobActors[0] = mactor1;
-        mobActors[1] = mactor2;
-        mobActors[2] = mactor3;
-        mobActors[3] = mactor4;
-        mobActors[4] = mactor5;
-        mobActors[5] = mactor6;
+        mobActors[0] = Mboss;
+        mobActors[1] = mactor1;
+        mobActors[2] = mactor2;
+        mobActors[3] = mactor3;
+        mobActors[4] = mactor4;
+        mobActors[5] = mactor5;
+        mobActors[6] = mactor6;
+
+        i = 0;
+        Mboss.Key = 0;
+        foreach (Actor a in stationActors)
+        { a.Key = ++i; }
 
 
         //Operations
         //Deals
-        DealOpsMob = new Operation[3];
-        Operation operationDM0 = new Operation(3, 11111, 1);
-        Operation operationDM1 = new Operation(3, 12222, 1);
-        Operation operationDM2 = new Operation(3, 14444, 1);
-        DealOpsMob[0] = operationDM0;
-        DealOpsMob[1] = operationDM1;
-        DealOpsMob[2] = operationDM2;
+        DealOps = new Operation[3];
+        Operation operationD0 = new Operation(3,3, 11111, 0);
+        Operation operationD1 = new Operation(3, 3, 12222, 0);
+        Operation operationD2 = new Operation(3, 3, 14444, 0);
+        DealOps[0] = operationD0;
+        DealOps[1] = operationD1;
+        DealOps[2] = operationD2;
 
         //should be synchronized time- and location-wise!!!
-        DealOpsPolice = new Operation[3];
-        Operation operationDP0 = new Operation(3, 11111, 1);
-        Operation operationDP1 = new Operation(3, 12222, 1);
-        Operation operationDP2 = new Operation(3, 14444, 1);
-        DealOpsPolice[0] = operationDP0;
-        DealOpsPolice[1] = operationDP1;
-        DealOpsPolice[2] = operationDP2;
+        //DealOpsPolice = new Operation[3];
+        //Operation operationDP0 = new Operation(3, 11111, 1);
+        //Operation operationDP1 = new Operation(3, 12222, 1);
+        //Operation operationDP2 = new Operation(3, 14444, 1);
+        //DealOpsPolice[0] = operationDP0;
+        //DealOpsPolice[1] = operationDP1;
+        //DealOpsPolice[2] = operationDP2;
 
         //Raids
-        RaidOpsPolice = new Operation[3];
-        Operation operationRP0 = new Operation(3, 13333, 2);
-        Operation operationRP1 = new Operation(3, 15555, 2);
-        Operation operationRP2 = new Operation(3, 16666, 2);
-        RaidOpsPolice[0] = operationRP0;
-        RaidOpsPolice[1] = operationRP1;
-        RaidOpsPolice[2] = operationRP2;
+        RaidOps = new Operation[3];
+        Operation operationR0 = new Operation(3, 3, 13333, 1);
+        Operation operationR1 = new Operation(3, 3, 15555, 1);
+        Operation operationR2 = new Operation(3, 3, 16666, 1);
+        RaidOps[0] = operationR0;
+        RaidOps[1] = operationR1;
+        RaidOps[2] = operationR2;
 
         //should be synchronized time- and location-wise!!!
-        RaidOpsMob = new Operation[3];
-        Operation operationRM0 = new Operation(3, 13333, 2);
-        Operation operationRM1 = new Operation(3, 15555, 2);
-        Operation operationRM2 = new Operation(3, 16666, 2);
-        RaidOpsMob[0] = operationRM0;
-        RaidOpsMob[1] = operationRM1;
-        RaidOpsMob[2] = operationRM2;
+        //RaidOpsMob = new Operation[3];
+        //Operation operationRM0 = new Operation(3, 13333, 2);
+        //Operation operationRM1 = new Operation(3, 15555, 2);
+        //Operation operationRM2 = new Operation(3, 16666, 2);
+        //RaidOpsMob[0] = operationRM0;
+        //RaidOpsMob[1] = operationRM1;
+        //RaidOpsMob[2] = operationRM2;
 
 
     }

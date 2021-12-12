@@ -6,10 +6,16 @@ using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
+
+    public PlayerScreenManager Screen;
     public Actor ChosenActor { get; set; }
+    public Team RealTeam { get; set; }
+    public Team PseudoTeam { get; set; }
     public int Trust { get; set; }
     public bool IsReady { get; set; }
     public PlayerState CurrentState;
+    public string OutputMessageBuffer { get; set; }
+    public string OutputTextBuffer { get; set; }
     // Start is called before the first frame update
     void Awake()
     {

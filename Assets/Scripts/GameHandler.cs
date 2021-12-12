@@ -13,15 +13,18 @@ public class GameHandler : MonoBehaviour
     private Team Mob;
     public Player Matt;
     public Player Leo;
-    public PlayerScreenManager MattScreen;
-    public PlayerScreenManager LeoScreen;
+    //public PlayerScreenManager Matt.Screen;
+   // public PlayerScreenManager Leo.Screen;
     public string OutputMessageLeo;
     public string OutputMessageMatt;
     public string OutputTextLeo;
     public string OutputTextMatt;
 
     private bool errorFlag;
+    private bool currentOpFinished;
     private Operation currentOP;
+    public int currentOPIndex;
+    private Operation[] operations;
 
     // Start is called before the first frame update
     void Awake()
@@ -29,156 +32,186 @@ public class GameHandler : MonoBehaviour
         dataBase = new DataBase();
         InitializeTeams();
         InitializeActors();
-        errorFlag = false;
-    }
+        Matt.RealTeam = Mob;
+        Matt.PseudoTeam = Police;
+        Leo.RealTeam = Police;
+        Leo.PseudoTeam = Mob;
 
-    void Start()
+        operations = new Operation[6];
+        getOps();
+        Debug.Log(printOps());
+        //1st op: Deal, both have intel
+        currentOPIndex = 0;
+        currentOP = operations[currentOPIndex];
+        errorFlag = false;
+        currentOpFinished = false;
+
+}
+
+void Start()
     {
-        OutputMessageLeo = "Choose who to play as";
-        OutputMessageMatt = "Choose who to play as";
-        int i = 1;
-        foreach (Actor actor in Police.Actors)
-        {
-            OutputTextLeo += i++ + ". " + actor.ToString() + "\n";
-        }
-        i = 1;
-        foreach (Actor actor in Mob.Actors)
-        {
-            OutputTextMatt += i++ + ". " + actor.ToString() + "\n";
-        }
+        Leo.OutputMessageBuffer = "Choose who to play as";
+        Leo.OutputTextBuffer = Leo.PseudoTeam.ActorsWOBossToString();
+        Matt.OutputMessageBuffer = "Choose who to play as";
+        Matt.OutputTextBuffer = Matt.PseudoTeam.ActorsWOBossToString();
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        LeoScreen.OutputMessage.text = OutputMessageLeo;
-        LeoScreen.OutputText.text = OutputTextLeo;
 
-        MattScreen.OutputMessage.text = OutputMessageMatt;
-        MattScreen.OutputText.text = OutputTextMatt;
+        Leo.Screen.OutputMessage.text = Leo.OutputMessageBuffer;
+        Leo.Screen.OutputText.text = Leo.OutputTextBuffer;
+        Matt.Screen.OutputMessage.text = Matt.OutputMessageBuffer;
+        Matt.Screen.OutputText.text = Matt.OutputTextBuffer;
 
-        if ((Matt.IsReady) && (Leo.IsReady) && (!errorFlag))
+        if ((Matt.IsReady) && (Leo.IsReady) && (!errorFlag))  
         {
-            ManageTurn();
+            //end of each input here
+            if (currentOpFinished) { currentOP = operations[++currentOPIndex]; } //if the flag is up - next op
+            ManageTurn(Leo);  //Add multithresd?
+            ManageTurn(Matt);
         }
         
     }
-    void ManageTurn()
+    void ManageTurn(Player currentPlayer) //implement later!!!!!
     {
-        if (Mob.OperationPlanned.Date < Police.OperationPlanned.Date)
-        {
-            currentOP = Mob.OperationPlanned;
-        }
-        else { currentOP = Police.OperationPlanned; }
+        //if current player == Leo
 
-
-        //Process Leo
-
-        Leo.IsReady = false;
-        switch (Leo.CurrentState)
+        currentPlayer.IsReady = false;
+        switch (currentPlayer.CurrentState) //start every  case by getting input
+            //only one input intake per state!!!
         {
             case PlayerState.ACTORCHOICE:
-                Leo.ChosenActor = Police.Actors[int.Parse(LeoScreen.InputField.text)-1];
-               // Mob.NextOp = dataBase.DealOpsMob[0];
-               // Mob.EnemyInputNextOp = dataBase.DealOpsPolice[0];
-                Leo.CurrentState = PlayerState.PREOPERATION;
-                OutputMessageLeo = "Join the first Operation? type yes orno";
+                currentPlayer.ChosenActor = currentPlayer.RealTeam.Actors[int.Parse(currentPlayer.Screen.InputField.text)];
+                currentPlayer.CurrentState = PlayerState.PREOPERATION;
+                currentPlayer.OutputMessageBuffer = "Join the first Operation?";
+                currentPlayer.OutputTextBuffer = "type yes or no";
                 break;
-            case PlayerState.PREOPERATION:
-                if ((currentOP.type == Operation.OPtype.DEAL) || ((currentOP.type == Operation.OPtype.RAID) &&(Mob.HasIntel)))
+
+            case PlayerState.PREOPERATIONHASINTEL:
+                if ((currentPlayer == Leo && ((currentOP.type == Operation.OPtype.DEAL) || ((currentOP.type == Operation.OPtype.RAID) && (Mob.HasIntel)))) ||
+                   (currentPlayer == Matt && ((currentOP.type == Operation.OPtype.RAID) || ((currentOP.type == Operation.OPtype.DEAL) && (Police.HasIntel)))))
                 {
-                    if (LeoScreen.InputField.text == "yes")
+                    if (currentPlayer.Screen.InputField.text == "yes")
                     {
-                        Leo.CurrentState = PlayerState.ONOPERATION;
+                        currentPlayer.CurrentState = PlayerState.PING;
+                        //add to on op fill
+                        //fill invis
                         errorFlag = false;
                     }
-                    else if (LeoScreen.InputField.text == "no")
+                    else if (currentPlayer.Screen.InputField.text == "no")      //add branch to base(-1 trust) /invis (-2 trust)?
                     {
-                        Leo.CurrentState = PlayerState.OFFOPERATION;
+                        currentPlayer.CurrentState = PlayerState.OFFOPERATION;
+                        //add to invis, fill
+                        //fill on op
+                        currentPlayer.Trust--;
                         errorFlag = false;
                     }
                     else
                     {
-                        OutputMessageLeo = "Type again: yes or no";
+                        currentPlayer.Screen.OutputMessage.text = "Mistype";
                         errorFlag = true;
                     }
                     break;
                 }
                 else {
-                        OutputMessageLeo = "You have no intel on the department/n Meet with your real Boss?";
-                        if (LeoScreen.InputField.text == "yes")
+                    currentPlayer.OutputMessageBuffer = "You have no intel on your opponent's plans\n Meet with your real Boss?";
+                    currentPlayer.OutputTextBuffer = "type yes or no";
+                    if (currentPlayer.Screen.InputField.text == "yes")
                         {
-                            Leo.CurrentState = PlayerState.MEETINGBOSS;
-                            errorFlag = false;
+                        currentPlayer.CurrentState = PlayerState.MEETINGBOSS;
+                        //add to invis
+                        //fill base/invis (random)
+                        //exclude boss from enemy onOp
+                        errorFlag = false;
                         }
-                        else if (LeoScreen.InputField.text == "no")
+                        else if (currentPlayer.Screen.InputField.text == "no")
                         {
-                            Leo.CurrentState = PlayerState.OFFOPERATION;
+                        //add to base or invis (random) 
+                        currentPlayer.CurrentState = PlayerState.OFFOPERATION;
                             errorFlag = false;
                         }
                         else
                         {
-                            OutputMessageLeo = "Type again: yes or no";
+                        currentPlayer.Screen.OutputMessage.text = "Mistype";
                             errorFlag = true;
                         }
                     }
                     break;
 
-            case PlayerState.ONOPERATION:
+            case PlayerState.PING: //onop part 1
+                //ping enemy team
+                //enemy watching? - move to post?
+                currentPlayer.Screen.OutputMessage.text = "Choose who to ping on station base";
+                currentPlayer.Screen.OutputText.text = Police.ActorsWBossToString();
+                //has info or not 
 
+                //joined
+                //convey or not
+                break;
+            case PlayerState.ONOPERATION:  //onop part 2
+
+                //joined
+                //convey or not
+                break;
+            case PlayerState.MEETINGBOSS:
+                //convey or not
+                //get info or not (trust check)
+                //off base
                 break;
             case PlayerState.OFFOPERATION:
-
+                //nothing?
                 break;
             case PlayerState.POSTOPERATION:
-
+                //review log
                 break;
             case PlayerState.NONE:
-
+                //unknown state
                 break;
 
         }
-        LeoScreen.InputField.text = " ";
-       
+        currentPlayer.Screen.InputField.text = " ";
 
         //Process Matt
 
-        Matt.IsReady = false;
-        switch (Matt.CurrentState)
-        {
-            case PlayerState.ACTORCHOICE:
-                Matt.ChosenActor = Mob.Actors[int.Parse(MattScreen.InputField.text) - 1];
+        //Matt.IsReady = false;
+        //switch (Matt.CurrentState)
+        //{
+        //    case PlayerState.ACTORCHOICE:
+        //        Matt.ChosenActor = Mob.Actors[int.Parse(Matt.Screen.InputField.text) - 1];
 
-                Matt.CurrentState = PlayerState.PREOPERATION;
-                break;
-            case PlayerState.PREOPERATION:
-                break;
-            case PlayerState.ONOPERATION:
+        //        Matt.CurrentState = PlayerState.PREOPERATION;
+        //        break;
+        //    case PlayerState.PREOPERATION:
+        //        break;
+        //    case PlayerState.ONOPERATION:
 
-                break;
-            case PlayerState.OFFOPERATION:
+        //        break;
+        //    case PlayerState.OFFOPERATION:
 
-                break;
-            case PlayerState.POSTOPERATION:
+        //        break;
+        //    case PlayerState.POSTOPERATION:
 
-                break;
-            case PlayerState.NONE:
+        //        break;
+        //    case PlayerState.NONE:
 
-                break;
+        //        break;
 
-        }
-        MattScreen.InputField.text = " ";
+        //}
+        //Matt.Screen.InputField.text = " ";
 
 
-        Debug.Log(" ");
+        Debug.Log("End turn");
     }
     void InitializeTeams()
     {
         Police = new Team();
-        Police.OperationPlanned = dataBase.RaidOpsPolice[Police.CurrentOPIndex];
         Mob = new Team();
-        Mob.OperationPlanned = dataBase.DealOpsMob[Mob.CurrentOPIndex];
+
+        Mob.HasIntel = true;
+        Police.HasIntel = true;
     }
 
     void InitializeActors()
@@ -190,5 +223,51 @@ public class GameHandler : MonoBehaviour
 
         this.Mob.Actors = dataBase.mobActors;
         this.Mob.Boss = dataBase.Mboss;
+    }
+
+    void getOps() //all the ops in chronological order
+    {
+        operations[0] = dataBase.DealOps[0];
+        int i = 1;
+        int j = 0;
+        int k = 1;
+        Debug.Log(i + "  " + j + " " + k);
+        while( (k<6) && (i < dataBase.DealOps.Length ) && (j < dataBase.RaidOps.Length ) ) 
+        {
+            if (dataBase.DealOps[i].Date < dataBase.RaidOps[j].Date)
+            {
+                operations[k] = dataBase.DealOps[i];
+                i++;
+                k++;
+            }
+            else {
+                operations[k] = dataBase.RaidOps[j];
+                j++;
+                k++;
+            }
+        }
+        while (i < dataBase.DealOps.Length )
+        {
+            operations[k] = dataBase.DealOps[i];
+            i++;
+            k++;
+        }
+
+        while (j < dataBase.RaidOps.Length )
+        {
+            operations[k] = dataBase.RaidOps[j];
+            j++;
+            k++;
+        }
+
+    }
+    string printOps()
+    {
+        string opList = "";
+        foreach (Operation op in operations)
+        {
+            opList += (op.toString() + "\n");
+        }
+        return opList;
     }
 }

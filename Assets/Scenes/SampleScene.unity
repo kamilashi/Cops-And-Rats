@@ -166,6 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1782927da0f1714c9c4c3840cf80dd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Screen: {fileID: 1493748490}
   CurrentState: 0
 --- !u!1 &88007743
 GameObject:
@@ -289,6 +290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1782927da0f1714c9c4c3840cf80dd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Screen: {fileID: 763634751}
   CurrentState: 0
 --- !u!1 &191309189
 GameObject:
@@ -978,7 +980,7 @@ GameObject:
   - component: {fileID: 763634750}
   - component: {fileID: 763634751}
   m_Layer: 0
-  m_Name: Leo
+  m_Name: LeoScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1568,7 +1570,7 @@ GameObject:
   - component: {fileID: 1493748489}
   - component: {fileID: 1493748490}
   m_Layer: 0
-  m_Name: Matt
+  m_Name: MattScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1662,7 +1664,8 @@ MonoBehaviour:
   Leo: {fileID: 187457582}
   MattScreen: {fileID: 1493748490}
   LeoScreen: {fileID: 763634751}
-  OutputMessage: 
+  OutputMessageLeo: 
+  OutputMessageMatt: 
   OutputTextLeo: 
   OutputTextMatt: 
 --- !u!1 &1953070847

@@ -14,6 +14,7 @@ public class Operation
     public int index { get; set; }
     public string Location { get; set; }
     public OPtype type;
+    public bool EnemyHasIntel { get; set; } //changed by the player once they leak info to their real team in between the ops (E.g. Leo leaks --> DealOps[next].EnemyHasIntel = true)
 
     public Operation(){ }
     public Operation(int ActorsCountPolice, int ActorsCountMob, int date, int t)
@@ -22,6 +23,7 @@ public class Operation
         this.ActorsCountMob = ActorsCountMob;
         this.Date = date;
         this.type = (OPtype) t;
+        EnemyHasIntel = false;
     }
     public Operation(int ActorsCountPolice, int ActorsCountMob, int date, int t, string loc)
     {
@@ -30,6 +32,7 @@ public class Operation
         this.Date = date;
         this.type = (OPtype) t;
         this.Location = loc;
+        EnemyHasIntel = false;
     }
 
     public string toString()
@@ -65,27 +68,22 @@ public class Operation
 public class Team 
 {
     public Actor[] Actors { get; set; } // array of 10
-    public Actor[] ActorsInvis { get; set; }   //?
-    public Actor[] ActorsOnOP { get; set; }   //?
-    public Actor[] ActorsOnBase { get; set; }   //?
+    public Actor[] ActorsInvisible { get; set; }   //?
+    public Actor[] ActorsVisible { get; set; }   //?
     public Actor Boss { get; set; }
 
-    public int AdvancePoints { get; set; }
-    //public Operation NextOp { get; set; }
-    //public Operation OperationPlanned { get; set; }
-    //public int CurrentOPIndex { get; set; }
-    public bool HasIntel { get; set; }
-    //public Operation EnemyInputNextOp { get; set; }
+    public int Points { get; set; }
+    //public bool HasIntel { get; set; }
+    public bool LeakDetected { get; set; } //shanged by the opposite team if the enemy player leaks info during op (Leo leaks --> Mob.LeakDetected = true)
 
     // Start is called before the first frame update
     public Team()
     {
-        AdvancePoints = 0;
+        Points = 0;
         HasIntel = false;
         Actors = new Actor[7];
-        ActorsOnBase = new Actor[7]; 
-        ActorsInvis = new Actor[7];
-        ActorsOnOP = new Actor[7];
+        ActorsVisible = new Actor[7];
+        ActorsInvisible = new Actor[7];
     }
 
     public string ActorsWOBossToString()
@@ -116,12 +114,10 @@ public class Team
 
 public enum PlayerState
 { 
-        ACTORCHOICE,
-        PREOPERATION,
-        PING,
-        ONOPERATION,
-        OFFOPERATION,
-        MEETINGBOSS,
-        POSTOPERATION,
+        ACTORCHOICE, //choose a character
+        PREOPERATION, //Join or not
+        PINGING, //which opposite chars to ping (if at all)
+        LEAKINGINFO,  //leak info to the real team or no (on/off op)
+        POSTOPERATION,  //view log, end turn
         NONE
 }

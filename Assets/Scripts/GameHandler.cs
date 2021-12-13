@@ -45,6 +45,7 @@ public class GameHandler : MonoBehaviour
         currentOP = operations[currentOPIndex];
         errorFlag = false;
         currentOpFinished = false;
+        onOperation = false;
 
 }
 
@@ -81,7 +82,7 @@ void Start()
 
         currentPlayer.IsReady = false;
         switch (currentPlayer.CurrentState) //start every  case by getting input
-            //only one input intake per state!!!
+                                            //only one input intake per state!!!
         {
             case PlayerState.ACTORCHOICE:
                 currentPlayer.ChosenActor = currentPlayer.RealTeam.Actors[int.Parse(currentPlayer.Screen.InputField.text)];
@@ -91,26 +92,37 @@ void Start()
                 break;
 
             case PlayerState.PREOPERATION:
-                if ((currentPlayer == Leo && ((currentOP.type == Operation.OPtype.DEAL) || ((currentOP.type == Operation.OPtype.RAID) && (Mob.HasIntel)))) ||
-                   (currentPlayer == Matt && ((currentOP.type == Operation.OPtype.RAID) || ((currentOP.type == Operation.OPtype.DEAL) && (Police.HasIntel)))))
+                if ((currentPlayer == Leo && ((currentOP.type == Operation.OPtype.DEAL) || ((currentOP.type == Operation.OPtype.RAID) && (currentOP.EnemyHasIntel)))) ||
+                   (currentPlayer == Matt && ((currentOP.type == Operation.OPtype.RAID) || ((currentOP.type == Operation.OPtype.DEAL) && (currentOP.EnemyHasIntel)))))
                 {
                     if (currentPlayer.Screen.InputField.text == "yes")
                     {
-                        currentPlayer.CurrentState = PlayerState.PING;          //you decided to join the op
-
-                        currentPlayer.Screen.OutputMessage.text = "You decided to join the operation. \nChoose who to ping from your real team";
-                        currentPlayer.Screen.OutputText.text = Police.ActorsWBossToString();
-                        //add to on op fill
-                        //fill invis
+                        currentPlayer.OnOperation = true;
+                        if (currentOP.EnemyHasIntel)
+                        {
+                            currentPlayer.CurrentState = PlayerState.PINGING;          //you decided to join the op
+                            currentPlayer.Screen.OutputMessage.text = "You decided to join the operation. \nTime to choose who to ping from your real team";
+                            currentPlayer.Screen.OutputText.text = Police.ActorsWBossToString();
+                        }
+                        else {
+                            currentPlayer.CurrentState = PlayerState.LEAKINGINFO;
+                            currentPlayer.OutputMessageBuffer = "No one's watching. No one to ping.";
+                            currentPlayer.OutputTextBuffer = "Input anything to continue. ";
+                        }
+                        //add to vis
+                        //fill the rest to invis
                         errorFlag = false;
                     }
                     else if (currentPlayer.Screen.InputField.text == "no")      //you decided to lay low         //add branch to base(-1 trust) /invis (-2 trust)?
                     {
-                        currentPlayer.CurrentState = PlayerState.OFFOPERATION;
+                        currentPlayer.CurrentState = PlayerState.POSTOPERTION;
                         //add to invis, fill
                         //fill on op
                         currentPlayer.Trust--;
                         errorFlag = false;
+
+                        currentPlayer.OutputMessageBuffer = "You decided to lay low for now. Input anything to continue.";
+                        currentPlayer.OutputTextBuffer = "Here be log";
                     }
                     else
                     {
@@ -119,52 +131,33 @@ void Start()
                     }
                 }
                 else
-                {      
-                    if (currentPlayer.Screen.InputField.text == "yes")
-                    {
-                        currentPlayer.CurrentState = PlayerState.CONVEYORNOT;           //you decided to meet with your boss to get info
-                        currentPlayer.OutputMessageBuffer = "You decided to meet with your boss to get info and maybe tell them your fake team's plans";
-                        currentPlayer.OutputTextBuffer = "type yes or no";
-                        //add to invis
-                        //fill base/invis (random)
-                        //exclude boss from enemy onOp
-
-                        errorFlag = false;
-                    }
-                    else if (currentPlayer.Screen.InputField.text == "no")              //you decided to lay low
-                    {
-                        //add to base or invis (random) 
-                        currentPlayer.CurrentState = PlayerState.OFFOPERATION;          
-                        errorFlag = false;
-                    }
-                    else
-                    {
-                        currentPlayer.Screen.OutputMessage.text = "Mistype";
-                        errorFlag = true;
-                    }
+                {
+                    currentPlayer.CurrentState = PlayerState.POSTOPERTION;
+                    currentPlayer.OutputMessageBuffer = "Thanks to your opponent, your pseudo team didn't have any intel on their enemy's next move. You were unprepared when they struck \n You can view your log instead:";
+                    currentPlayer.OutputTextBuffer = "Here be log";
                 }
-                    break;
+                break;
 
-            case PlayerState.PING: //onop part 1
-                //ping enemy team
-                //enemy watching? - move to post?
-                //has info or not 
+            case PlayerState.PINGING: //onop part 1
+                if (currentOP.EnemyHasIntel)
+                {
+                    //ping enemy team 
+                    //Add to log
+                    //how do you know how many actors to ping???
+                }
+                else {
+                    // currentPlayer.OutputMessageBuffer = "No one's watching."; //shouldn't reach this
+                }
+                currentPlayer.CurrentState = PlayerState.LEAKINGINFO;
+                currentPlayer.OutputMessageBuffer += "Leak info to your real team?";
+                currentPlayer.OutputTextBuffer = "type yes or no";
 
+                break;
+            case PlayerState.LEAKINGINFO:  //onop part 2
+                if (currentPlayer.OnOperation )
+                { currentPlayer.OnOperation = false; }
                 //joined
                 //convey or not
-                break;
-            case PlayerState.CONVEYORNOT:  //onop part 2
-
-                //joined
-                //convey or not
-                break;
-            case PlayerState.MEETINGBOSS:
-                //convey or not
-                //get info or not (trust check)
-                //off base
-                break;
-            case PlayerState.OFFOPERATION:
-                //nothing?
                 break;
             case PlayerState.POSTOPERATION:
                 //review log

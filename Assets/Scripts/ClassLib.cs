@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ClassLib : MonoBehaviour
@@ -35,7 +36,7 @@ public class Operation
         EnemyHasIntel = false;
     }
 
-    public string toString()
+    public string ToString()
     { 
         return ( (OPtype) type + ": date: " + Date + " location: " + Location + " participating cops: " + ActorsCountPolice + " participating gangsters: " + ActorsCountMob);
     }
@@ -56,7 +57,9 @@ public class Operation
 
     public Actor(string fname, string lname)
     {this.FName = fname; 
-     this.LName = lname; }
+     this.LName = lname;
+        IsAlive = true;
+    }
 
     
     public string ToString()
@@ -65,15 +68,15 @@ public class Operation
     }
 }
 
-public class Team 
+public class Team
 {
     public Actor[] Actors { get; set; } // array of 10
-    public Actor[] ActorsInvisible { get; set; }   //?
-    public Actor[] ActorsVisible { get; set; }   //?
+    public int[] ActorsVisInvis { get; set; }   // indices of participating actors to be randomized each time
+    public int playerIndex { get; set; }
+    public int split { get; set; }              //index so that for all i < split all the entries ActorsVisInvis[i] are "visible" and for i > split - "invisible"
     public Actor Boss { get; set; }
 
     public int Points { get; set; }
-    //public bool HasIntel { get; set; }
     public bool LeakDetected { get; set; } //shanged by the opposite team if the enemy player leaks info during op (Leo leaks --> Mob.LeakDetected = true)
 
     // Start is called before the first frame update
@@ -81,30 +84,116 @@ public class Team
     {
         Points = 0;
         Actors = new Actor[7];
-        ActorsVisible = new Actor[7];
-        ActorsInvisible = new Actor[7];
+        ActorsVisInvis = new int[7];
+        split = 0;
+        playerIndex = 0;
     }
 
     public string ActorsWOBossToString()
     {
         string OutputString = "";
-        int i = 1;
-        foreach (Actor actor in Actors)
+        int i;
+        for (i = 1; i < Actors.Length; i++)
         {
-            OutputString += i++ + ". " + actor.ToString() + "\n";
+            OutputString += i + ". " + Actors[i].ToString() + "\n";
         }
 
         return OutputString;
     }
     public string ActorsWBossToString()
     {
-        string OutputString = "1. " + Boss.ToString() + " (Boss)\n";
-        int i = 2;
-        foreach (Actor actor in Actors)
+        string OutputString = "";
+        //string OutputString = "1. " + Boss.ToString() + " (Boss)\n";
+        int i;
+        for (i = 0; i < Actors.Length; i++)
         {
-            OutputString += i++ + ". " + actor.ToString() + "\n";
+            OutputString += (i) + ". " + Actors[i].ToString() + "\n";
         }
 
+        return OutputString;
+    }
+    public void ShuffleFillActors(int actorsOnOpCount, int playerActorKey) //first fill the vis part excluding the player - the player will be the first in the invis part (ActorsVisInvis[split])
+    {                                                                                //if they want to join swap the ActorsVisInvis[split-1] with ActorsVisInvis[split]
+        int i, swap;
+
+        foreach (Actor actor in Actors)             //copy indices as is (Key = index)
+        { ActorsVisInvis[actor.Key] = actor.Key; }
+
+        //first move the player actor index into the position
+        
+        ActorsVisInvis[playerActorKey] = ActorsVisInvis[actorsOnOpCount];
+        ActorsVisInvis[actorsOnOpCount] = playerActorKey;
+
+        for (i = 0; i < ActorsVisInvis.Length; i++)
+        { 
+            int randomIndex = Random.Range(0, Actors.Length); //includes min value but not max value (7 is the length of the array)
+            if ((i != actorsOnOpCount) && (randomIndex != actorsOnOpCount) )         //only possible bc the key is the same as the actor's index in array 
+                    {
+                swap = ActorsVisInvis[i];
+                ActorsVisInvis[i] = ActorsVisInvis[randomIndex];
+                ActorsVisInvis[randomIndex] = swap;
+            }
+        }
+        Debug.Log("Shuffeled list:");
+        foreach (int index in ActorsVisInvis)
+        {
+            Debug.Log(index);
+        }
+
+        split = actorsOnOpCount;
+        playerIndex = playerActorKey;
+    }
+
+    public void PlayerToVis()
+    {
+        ActorsVisInvis[split] = ActorsVisInvis[split - 1];
+        ActorsVisInvis[split - 1] = playerIndex;
+    }
+
+    public bool IsVisible(int indexKey)
+    {
+
+        int i;
+        for (i = 0; i < split; i++)  //look for a match in the visible part
+        {
+            if (ActorsVisInvis[i]== indexKey)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public string ActorsVisPreOpToString()
+    {
+        string OutputString = "";
+        int i;
+        for (i = 0; i < split - 1; i++)
+        {
+            OutputString += Actors[ActorsVisInvis[i]].ToString() + "\n";
+        }
+        return OutputString;
+    }
+
+    public string ActorsVisToString()
+    {
+        string OutputString = "";
+        int i;
+        for (i = 0; i < split; i++)
+        {
+            OutputString += Actors[ActorsVisInvis[i]].ToString() + "\n";
+        }
+        return OutputString;
+    }
+
+    public string ActorsInvisToString()
+    {
+        string OutputString = "";
+        int i;
+        for (i = split; i < ActorsVisInvis.Length; i++)
+        {
+            OutputString += Actors[ActorsVisInvis[i]].ToString() + "\n";
+        }
         return OutputString;
     }
 }

@@ -17,13 +17,13 @@ public class DataBase
     {
         //Police station
         stationActors = new Actor[7];
-        Actor pactor1 = new Actor("Mary", " Cotton");
-        Actor pactor2 = new Actor("Ben", " Waller");
-        Actor pactor3 = new Actor("Wendy", " Morgan");
-        Actor pactor4 = new Actor("Henry", " Schultz");
-        Actor pactor5 = new Actor("Helen", " Ripley");
-        Actor pactor6 = new Actor("Michael", " Kelly");
-        Pboss = new Actor("Francis", " Verga");
+        Actor pactor1 = new Actor("Mary", "Cotton");
+        Actor pactor2 = new Actor("Ben", "Waller");
+        Actor pactor3 = new Actor("Wendy", "Morgan");
+        Actor pactor4 = new Actor("Henry", "Schultz");
+        Actor pactor5 = new Actor("Helen", "Ripley");
+        Actor pactor6 = new Actor("Michael", "Kelly");
+        Pboss = new Actor("Francis", "Verga");
 
         //add to array
         stationActors[0] = Pboss;
@@ -35,21 +35,20 @@ public class DataBase
         stationActors[6] = pactor6;
 
         //assign keys:
-        int i = 0;
-        Pboss.Key = 0;
-        foreach (Actor a in stationActors)
-        { a.Key = ++i; }
+        int i;
+        for (i = 0; i < stationActors.Length; i++)
+        { stationActors[i].Key = i; }
 
 
         //Mob
         mobActors = new Actor[7];
-        Actor mactor1 = new Actor("Anna", " Cox");
-        Actor mactor2 = new Actor("Eric ", "Sagalski");
-        Actor mactor3 = new Actor("Sophie ", "Rothstein");
-        Actor mactor4 = new Actor("Marcus ", "Bell");
-        Actor mactor5 = new Actor("James", " Allen");
-        Actor mactor6 = new Actor("Matthew", " Hill");
-         Mboss = new Actor("Charles ", "Hess");
+        Actor mactor1 = new Actor("Anna", "Cox");
+        Actor mactor2 = new Actor("Eric","Sagalski");
+        Actor mactor3 = new Actor("Sophie", "Rothstein");
+        Actor mactor4 = new Actor("Marcus", "Bell");
+        Actor mactor5 = new Actor("James", "Allen");
+        Actor mactor6 = new Actor("Matthew", "Hill");
+         Mboss = new Actor("Charles", "Hess");
 
         //add to array
         mobActors[0] = Mboss;
@@ -60,16 +59,14 @@ public class DataBase
         mobActors[5] = mactor5;
         mobActors[6] = mactor6;
 
-        i = 0;
-        Mboss.Key = 0;
-        foreach (Actor a in stationActors)
-        { a.Key = ++i; }
+        for (i = 0; i < mobActors.Length; i++)
+        { mobActors[i].Key = i; }
 
 
         //Operations
         //Deals
         DealOps = new Operation[3];
-        Operation operationD0 = new Operation(3,3, 11111, 0);
+        Operation operationD0 = new Operation(5,5, 11111, 0);
         Operation operationD1 = new Operation(3, 3, 12222, 0);
         Operation operationD2 = new Operation(3, 3, 14444, 0);
         DealOps[0] = operationD0;

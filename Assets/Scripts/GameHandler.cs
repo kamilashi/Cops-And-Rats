@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,9 +21,9 @@ public class GameHandler : MonoBehaviour
     public string OutputTextLeo;
     public string OutputTextMatt;
 
-    private bool errorFlag;
-    private bool currentOpFinished;
-    private Operation currentOP;
+    public bool errorFlag;
+    public bool currentOpFinished;
+    public Operation currentOP;
     public int currentOPIndex;
     private Operation[] operations;
 
@@ -71,24 +72,42 @@ void Start()
         {
             //end of each input here
             if (currentOpFinished) { currentOP = operations[++currentOPIndex]; currentOpFinished = false; } //if the flag is up - next op
-            ManageTurn(Leo);  //Add multithresd?
-            ManageTurn(Matt);
+            if (!Leo.Wait) {                //Add multithresd?
+                ManageTurn(Leo);
+                if (Leo.EndTurn)
+                { Leo.EndTurn = false; Matt.Wait = false; }
+            } 
+            if (!Matt.Wait) { ManageTurn(Matt); if (Matt.EndTurn)
+                { Matt.EndTurn = false; Leo.Wait = false; }
+            }
         }
         
     }
     void ManageTurn(Player currentPlayer) //implement later!!!!!
     {
-        //if current player == Leo
-
         currentPlayer.IsReady = false;
+        int split;
         switch (currentPlayer.CurrentState) //start every  case by getting input
                                             //only one input intake per state!!!
         {
             case PlayerState.ACTORCHOICE:
-                currentPlayer.ChosenActor = currentPlayer.RealTeam.Actors[int.Parse(currentPlayer.Screen.InputField.text)];
+                currentPlayer.ChosenActor = currentPlayer.PseudoTeam.Actors[int.Parse(currentPlayer.Screen.InputField.text)];
                 currentPlayer.CurrentState = PlayerState.PREOPERATION;
-                currentPlayer.OutputMessageBuffer = "Join the first Operation?";
-                currentPlayer.OutputTextBuffer = "type yes or no";
+
+                currentPlayer.OutputMessageBuffer = "You chose to play as " + currentPlayer.ChosenActor.FName  + currentPlayer.ChosenActor.LName + "\n\n";
+                currentPlayer.OutputMessageBuffer += "Operation info: \n";
+
+                if (currentPlayer == Leo)
+                {
+                    split = currentOP.ActorsCountMob;
+                }
+                else
+                { split = currentOP.ActorsCountPolice; }
+                currentPlayer.PseudoTeam.ShuffleFillActors(split, currentPlayer.ChosenActor.Key);
+                currentPlayer.OutputTextBuffer += currentOP.ToString() + "\n\nGoing to the op:\n";
+                currentPlayer.OutputTextBuffer = currentPlayer.PseudoTeam.ActorsVisPreOpToString() +"\n";
+                currentPlayer.OutputTextBuffer += "Join them on your first operation? type yes or no";
+                
                 break;
 
             case PlayerState.PREOPERATION:
@@ -97,24 +116,27 @@ void Start()
                 {
                     if (currentPlayer.Screen.InputField.text == "yes")
                     {
+                        currentPlayer.PseudoTeam.PlayerToVis();
                         currentPlayer.CurrentState = PlayerState.LEAKINGINFO;
-                        currentPlayer.OutputMessageBuffer = "You decided to join the operation. Leak info to your real team?";
-                        currentPlayer.OutputTextBuffer = "type yes or no";
-                        //add to vis
-                        //fill the rest to invis
+                        currentPlayer.OutputMessageBuffer = "You decided to join the operation.";
+                        currentPlayer.OutputTextBuffer = "Currently on operation: \n";
+                        currentPlayer.OutputTextBuffer += currentPlayer.PseudoTeam.ActorsVisToString() + "\n";
+                       currentPlayer.OutputTextBuffer += "Leak info to your real team? type yes or no";
+
+
+                        currentPlayer.Log += "Joined operation " + currentOP.ToString() + "\n";
                         errorFlag = false;
                     }
                     else if (currentPlayer.Screen.InputField.text == "no")      //you decided to lay low         //add branch to base(-1 trust) /invis (-2 trust)?
                     {
                         currentPlayer.CurrentState = PlayerState.POSTOPERATION;
-                        //add to invis, fill
-                        //fill on op
                         currentPlayer.Trust--;
                         currentPlayer.PseudoTeam.Points++;
                         errorFlag = false;
 
                         currentPlayer.OutputMessageBuffer = "You decided to lay low for now. Type anything to continue.";
-                        currentPlayer.OutputTextBuffer = "Here be log";
+                        currentPlayer.OutputTextBuffer = currentPlayer.Log;
+                        currentPlayer.Wait = true;
                     }
                     else
                     {
@@ -125,16 +147,13 @@ void Start()
                 else
                 {
                     currentPlayer.CurrentState = PlayerState.POSTOPERATION;
-                    currentPlayer.OutputMessageBuffer = "Thanks to your opponent, your pseudo team didn't have any intel on their enemy's next move. You were unprepared when they struck \nYou can view your log instead.\nType anything to continue ";
-                    currentPlayer.OutputTextBuffer = "Here be log";
+                    currentPlayer.OutputMessageBuffer = "Thanks to your opponent, your pseudo team didn't have any intel on their enemy's next move.\nYou were unprepared when they struck \nYou can view your log instead.\nType anything to continue ";
+                    currentPlayer.OutputTextBuffer = currentPlayer.Log;
+                    currentPlayer.Wait = true;
                 }
                 break;
 
             case PlayerState.LEAKINGINFO:  //onop part 1
-
-                    //if (currentPlayer.OnOperation)
-               // {
-
                     if (currentPlayer.Screen.InputField.text == "yes")
                     {
                         currentPlayer.Trust--;
@@ -166,10 +185,8 @@ void Start()
                     {
                         currentPlayer.CurrentState = PlayerState.POSTOPERATION;
                         currentPlayer.OutputMessageBuffer = "No one is watching, so no one to ping. The op is over. Type anything to continue.";
-                        currentPlayer.OutputTextBuffer = "here be log";
-                    }
-
-               // }
+                        currentPlayer.OutputTextBuffer = currentPlayer.Log;
+                }
                 break;
 
 
@@ -180,41 +197,69 @@ void Start()
                 if(currentPlayer.RealTeam.LeakDetected)
                 {
                     //add leak to opponents log
-                    currentPlayer.Screen.OutputMessage.text = "\nYou have intel on the current operation:" + currentOP.toString();
-                    currentPlayer.Screen.OutputText.text = Police.ActorsWBossToString();
+                    if (currentPlayer == Leo)
+                    {
+                        Matt.Log += "Leak detected! \n";             //add opponent field to player class???
+                    }
+                    else { Leo.Log += "Leak detected! \n"; }
+
+                    currentPlayer.OutputMessageBuffer = "You have intel on the current operation:\n" + currentOP.ToString() +"\n";  //check if both sides are present!!!!???
+                    currentPlayer.OutputTextBuffer = currentPlayer.RealTeam.ActorsWBossToString();
                     //flush
                     currentPlayer.RealTeam.LeakDetected = false;
                 }
                 else 
                 {
-                    currentPlayer.Screen.OutputMessage.text = "\nYou don't have any intel on the current operation";
-                    currentPlayer.Screen.OutputText.text = Police.ActorsWBossToString();
+                    currentPlayer.OutputMessageBuffer = "\nYou don't have any intel on the current operation\n";
+                    currentPlayer.OutputTextBuffer = currentPlayer.RealTeam.ActorsWBossToString();
                 }
 
-                currentPlayer.Screen.OutputMessage.text += "Time to choose who to ping from your real team";
+                currentPlayer.OutputTextBuffer += "Choose " + currentPlayer.MaxPingable + " people to ping from your real team (type indexes space separated)";
 
 
 
                 break;
 
             case PlayerState.PINGING: //onop part 2
-
+               int maxPingableCount = currentPlayer.MaxPingable;           //extendable later??
+                currentPlayer.OutputMessageBuffer = "";
+                currentPlayer.OutputTextBuffer = "";
                 if (currentOP.EnemyHasIntel)
                 {
 
-                    //ping enemy team 
-                    //Add to log
+                    string input = currentPlayer.Screen.InputField.text;
+                    List<int> indexes = input.Split(' ').Select(int.Parse).ToList();
+
+
+                    foreach (int index in indexes)
+                    {
+
+                        if (currentPlayer.RealTeam.IsVisible(index))
+                        {
+                            currentPlayer.Log += currentPlayer.RealTeam.Actors[index].ToString() + " was there.\n";
+                        }
+                        else { currentPlayer.Log += currentPlayer.RealTeam.Actors[index].ToString() + " was not there.\n"; }
+                        maxPingableCount--;
+
+                        if (maxPingableCount==0)
+                        { break; }
+                    }
+
+                    currentPlayer.Log += "end of operation\n\n";
+
+
+                    currentPlayer.OutputMessageBuffer += "You ping output was added to your log. Type anything to continue.";
+                    currentPlayer.OutputTextBuffer += currentPlayer.Log;
                 }
                 else {
                     // currentPlayer.OutputMessageBuffer = "No one's watching."; //shouldn't reach this
                 }
                 currentPlayer.CurrentState = PlayerState.POSTOPERATION;
-                currentPlayer.OutputMessageBuffer = "You ping output was added to your log. Type anything to continue.";
-                currentPlayer.OutputTextBuffer = "here be log";
                 break;
             case PlayerState.POSTOPERATION:
 
                 currentOpFinished = true;
+                currentPlayer.EndTurn = true;
                 currentPlayer.CurrentState = PlayerState.ELIMINATING;
                 currentPlayer.OutputMessageBuffer = "Who would you like to try to eliminate from your team? Try to identify the rat";
                 currentPlayer.OutputTextBuffer = "0.No one (Skip to next step)\n";
@@ -222,6 +267,7 @@ void Start()
                 break;
 
             case PlayerState.ELIMINATING:
+                //kill here
                 currentPlayer.CurrentState = PlayerState.GAMEENDEVAL;
                 break;
 
@@ -282,9 +328,19 @@ void Start()
                     errorFlag = true;
                 }
 
-                currentPlayer.CurrentState = PlayerState.PREOPERATION;
-                currentPlayer.OutputMessageBuffer = "Join the next Operation?";
-                currentPlayer.OutputTextBuffer = "type yes or no";
+                currentPlayer.CurrentState = PlayerState.PREOPERATION; 
+                
+                currentPlayer.OutputMessageBuffer += "Operation info: \n";;
+                if (currentPlayer == Leo)
+                {
+                    split = currentOP.ActorsCountMob;
+                }
+                else
+                { split = currentOP.ActorsCountPolice; }
+                currentPlayer.PseudoTeam.ShuffleFillActors(split, currentPlayer.ChosenActor.Key);
+                currentPlayer.OutputTextBuffer += currentOP.ToString() + "\n\nGoing to the op:\n";
+                currentPlayer.OutputTextBuffer = currentPlayer.PseudoTeam.ActorsVisPreOpToString() + "\n";
+                currentPlayer.OutputTextBuffer += "Join them on your next operation? type yes or no";
                 break;
 
             case PlayerState.GAMEOVER:
@@ -358,7 +414,7 @@ void Start()
         string opList = "";
         foreach (Operation op in operations)
         {
-            opList += (op.toString() + "\n");
+            opList += (op.ToString() + "\n");
         }
         return opList;
     }

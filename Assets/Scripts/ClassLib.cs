@@ -37,7 +37,7 @@ public class Operation
 
     public string toString()
     { 
-        return ( (OPtype) type + ": d: " + Date + " l: " + Location + " police count: " + ActorsCountPolice + " mob count: " + ActorsCountMob);
+        return ( (OPtype) type + ": date: " + Date + " location: " + Location + " participating cops: " + ActorsCountPolice + " participating gangsters: " + ActorsCountMob);
     }
     public enum OPtype 
     {   
@@ -80,7 +80,6 @@ public class Team
     public Team()
     {
         Points = 0;
-        HasIntel = false;
         Actors = new Actor[7];
         ActorsVisible = new Actor[7];
         ActorsInvisible = new Actor[7];
@@ -118,6 +117,10 @@ public enum PlayerState
         PREOPERATION, //Join or not
         PINGING, //which opposite chars to ping (if at all)
         LEAKINGINFO,  //leak info to the real team or no (on/off op)
+        PROCESSLEAK, //only for on op - register leak, manage state transition
         POSTOPERATION,  //view log, end turn
-        NONE
+        ELIMINATING,
+         GAMEENDEVAL,
+        MEETINGBOSS,
+        GAMEOVER
 }

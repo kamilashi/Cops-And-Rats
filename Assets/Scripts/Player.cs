@@ -16,13 +16,11 @@ public class Player : MonoBehaviour
     public PlayerState CurrentState;
     public string OutputMessageBuffer { get; set; }
     public string OutputTextBuffer { get; set; }
-    public bool OnOperation;
     // Start is called before the first frame update
     void Awake()
     {
         Trust = 10;
         IsReady = false;
-        onOperation = false;
     }
     void Start()
     {

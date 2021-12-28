@@ -20,6 +20,7 @@ public class Player : MonoBehaviour
     public int MaxPingable { get; set; }
     public bool EndTurn;
     public bool Wait;
+    public string Command;
     // Start is called before the first frame update
     void Awake()
     {

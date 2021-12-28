@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Unity.Netcode;
 
 
 public class GameHandler : MonoBehaviour
@@ -14,8 +15,8 @@ public class GameHandler : MonoBehaviour
     private Team Mob;
     public Player Matt;
     public Player Leo;
-    //public PlayerScreenManager Matt.Screen;
-   // public PlayerScreenManager Leo.Screen;
+    //public PlayerScreenManager MattScreen;
+    //public PlayerScreenManager LeoScreen;
     public string OutputMessageLeo;
     public string OutputMessageMatt;
     public string OutputTextLeo;
@@ -26,6 +27,7 @@ public class GameHandler : MonoBehaviour
     public Operation currentOP;
     public int currentOPIndex;
     private Operation[] operations;
+    private static bool gameStart;
 
     // Start is called before the first frame update
     void Awake()
@@ -48,10 +50,88 @@ public class GameHandler : MonoBehaviour
         currentOP.EnemyHasIntel = true;
         errorFlag = false;
         currentOpFinished = false;
+        gameStart = false;
 
 }
 
-void Start()
+    void OnGUI()
+    {
+        GUILayout.BeginArea(new Rect(10, 10, 300, 300));
+        if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
+        {
+            StartButtons();
+        }
+        else
+        {
+            StatusLabels();
+            SubmitCommand();
+            gameStart = true;
+        }
+
+        GUILayout.EndArea();
+    }
+
+    static void StartButtons()
+    {
+        if (GUILayout.Button("Host (Play as Leo)")) { NetworkManager.Singleton.StartHost(); }
+        if (GUILayout.Button("Client (Play as Matt)")) { NetworkManager.Singleton.StartClient(); }
+        if (GUILayout.Button("Server")) NetworkManager.Singleton.StartServer();
+    }
+
+    static void StatusLabels()
+    {
+        var mode = NetworkManager.Singleton.IsHost ?
+            "Host (Play as Leo)" : NetworkManager.Singleton.IsServer ? "Server" : "Client (Play as Matt)";
+
+        GUILayout.Label("Transport: " +
+            NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name);
+        GUILayout.Label("Mode: " + mode);
+    }
+
+    static void SubmitCommand()
+    {
+        if (GUILayout.Button(NetworkManager.Singleton.IsServer ? "Submit Command" : "Submit Command (Client)"))
+        {
+            var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+            var playerScreen = playerObject.GetComponent<PlayerScreenManager>();
+
+            if (gameStart)
+            {
+                if (playerScreen.PlayerID == LeoScreen)
+                {
+                    Leo.Command = playerScreen.Screen.InputField.text;
+                    Leo.IsReady = true;
+                }
+                else if (playerScreen.PlayerID == MattScreen)
+                {
+                    Matt.Command = playerScreen.Screen.InputField.text;
+                    Matt.IsReady = true;
+                }
+
+                TryUpdate();
+
+
+            }
+            //try to manage turn
+
+
+
+            //update output
+            if (playerScreen == LeoScreen)
+            {
+                playerScreen.Screen.OutputMessage.text = Leo.OutputMessageBuffer;
+                playerScreen.Screen.OutputText.text = Leo.OutputTextBuffer;
+            }
+            else if (playerScreen == MattScreen)
+            {
+                playerScreen.Screen.OutputMessage.text = Matt.OutputMessageBuffer;
+                playerScreen.Screen.OutputText.text = Matt.OutputTextBuffer;
+            }
+
+        }
+    }
+
+    void Start()
     {
         Leo.OutputMessageBuffer = "Choose who to play as";
         Leo.OutputTextBuffer = Leo.PseudoTeam.ActorsWOBossToString();
@@ -61,37 +141,45 @@ void Start()
     }
 
     // Update is called once per frame
-    void Update()
+    void TryUpdate()
     {
+        //if (gameStart)
+        //{
 
-        Leo.Screen.OutputMessage.text = Leo.OutputMessageBuffer;
-        Leo.Screen.OutputText.text = Leo.OutputTextBuffer;
-        Matt.Screen.OutputMessage.text = Matt.OutputMessageBuffer;
-        Matt.Screen.OutputText.text = Matt.OutputTextBuffer;
+            //Leo.Screen.OutputMessage.text = Leo.OutputMessageBuffer;
+            //Leo.Screen.OutputText.text = Leo.OutputTextBuffer;
+            //Matt.Screen.OutputMessage.text = Matt.OutputMessageBuffer;
+            //Matt.Screen.OutputText.text = Matt.OutputTextBuffer;
 
-        if ((Matt.IsReady) && (Leo.IsReady) && (!errorFlag))  
-        {
-            //end of each input here
-            if (currentOpFinished) {
-                if (currentOPIndex < 10)
+            if ((Matt.IsReady) && (Leo.IsReady) && (!errorFlag))
+            {
+                //end of each input here
+                if (currentOpFinished)
                 {
-                    Debug.Log(operations[currentOPIndex].ToString());
-                    currentOP = operations[currentOPIndex++]; }
-                else { currentOPIndex = 0; }     //loop
-                 
-                
-                currentOpFinished = false; } //if the flag is up - next op
-            if ((!Leo.Wait)||((Leo.Wait) &&(Matt.Wait))) {                //Add multithresd?
-                ManageTurn(Leo);
-                if (Leo.EndTurn)
-                { Leo.EndTurn = false; Matt.Wait = false; }
-            } 
-            if ((!Matt.Wait)|| ((Leo.Wait) && (Matt.Wait))) { ManageTurn(Matt); if (Matt.EndTurn)
-                { Matt.EndTurn = false; Leo.Wait = false; }
-            }
+                    if (currentOPIndex < 10)
+                    {
+                        Debug.Log(operations[currentOPIndex].ToString());
+                        currentOP = operations[currentOPIndex++];
+                    }
+                    else { currentOPIndex = 0; }     //loop
 
-        }
-        
+
+                    currentOpFinished = false;
+                } //if the flag is up - next op
+                if ((!Leo.Wait) || ((Leo.Wait) && (Matt.Wait)))
+                {                //Add multithresd?
+                    ManageTurn(Leo);
+                    if (Leo.EndTurn)
+                    { Leo.EndTurn = false; Matt.Wait = false; }
+                }
+                if ((!Matt.Wait) || ((Leo.Wait) && (Matt.Wait)))
+                {
+                    ManageTurn(Matt); if (Matt.EndTurn)
+                    { Matt.EndTurn = false; Leo.Wait = false; }
+                }
+
+            }
+        //}
     }
     void ManageTurn(Player currentPlayer) //implement later!!!!!
     {
@@ -101,7 +189,7 @@ void Start()
                                             //only one input intake per state!!!
         {
             case PlayerState.ACTORCHOICE:
-                currentPlayer.ChosenActor = currentPlayer.PseudoTeam.Actors[int.Parse(currentPlayer.Screen.InputField.text)];
+                currentPlayer.ChosenActor = currentPlayer.PseudoTeam.Actors[int.Parse(currentPlayer.Command)];
                 currentPlayer.CurrentState = PlayerState.PREOPERATION;
 
                 currentPlayer.OutputMessageBuffer = "You chose to play as " + currentPlayer.ChosenActor.FName  + currentPlayer.ChosenActor.LName + "\n\n";
@@ -124,7 +212,7 @@ void Start()
                 if ((currentPlayer == Leo && ((currentOP.type == Operation.OPtype.DEAL) || ((currentOP.type == Operation.OPtype.RAID) && (currentOP.EnemyHasIntel)))) ||
                    (currentPlayer == Matt && ((currentOP.type == Operation.OPtype.RAID) || ((currentOP.type == Operation.OPtype.DEAL) && (currentOP.EnemyHasIntel)))))
                 {
-                    if (currentPlayer.Screen.InputField.text == "yes")
+                    if (currentPlayer.Command == "yes")
                     {
                         currentPlayer.PseudoTeam.PlayerToVis();
                         currentPlayer.CurrentState = PlayerState.LEAKINGINFO;
@@ -137,7 +225,7 @@ void Start()
                         currentPlayer.Log += "Joined operation " + currentOP.ToString() + "\n";
                         errorFlag = false;
                     }
-                    else if (currentPlayer.Screen.InputField.text == "no")      //you decided to lay low         //add branch to base(-1 trust) /invis (-2 trust)?
+                    else if (currentPlayer.Command == "no")      //you decided to lay low         //add branch to base(-1 trust) /invis (-2 trust)?
                     {
                         currentPlayer.CurrentState = PlayerState.POSTOPERATION;
                         currentPlayer.Trust--;
@@ -164,13 +252,13 @@ void Start()
                 break;
 
             case PlayerState.LEAKINGINFO:  //onop part 1
-                    if (currentPlayer.Screen.InputField.text == "yes")
+                    if (currentPlayer.Command == "yes")
                     {
                         currentPlayer.Trust--;
                         currentPlayer.PseudoTeam.LeakDetected = true;
                         errorFlag = false;
                     }
-                    else if (currentPlayer.Screen.InputField.text == "no")
+                    else if (currentPlayer.Command == "no")
                     {
                         currentPlayer.PseudoTeam.Points++;
                         errorFlag = false;
@@ -237,7 +325,7 @@ void Start()
                 if (currentOP.EnemyHasIntel)
                 {
 
-                    string input = currentPlayer.Screen.InputField.text;
+                    string input = currentPlayer.Command;
                     List<int> indexes = input.Split(' ').Select(int.Parse).ToList();
 
 
@@ -305,7 +393,7 @@ void Start()
                 break;
 
             case PlayerState.MEETINGBOSS:
-                if (currentPlayer.Screen.InputField.text == "yes")
+                if (currentPlayer.Command == "yes")
                 {
                     currentPlayer.Trust--;
                     //add a slider index to each team's ops array!! EnemyHasIntel = true;
@@ -327,7 +415,7 @@ void Start()
                     }
                     errorFlag = false;
                 }
-                else if (currentPlayer.Screen.InputField.text == "no")
+                else if (currentPlayer.Command == "no")
                 {
                     currentPlayer.PseudoTeam.Points++;
                     errorFlag = false;

@@ -12,6 +12,7 @@ public class PlayerScreenManager : MonoBehaviour
     public Text OutputText;
     public Text OutputMessage;
     public InputField InputField;
+    public string PlayerID;
 
     // Start is called before the first frame update
     void Start()

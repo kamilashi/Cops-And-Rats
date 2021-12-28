@@ -10,23 +10,23 @@ using Unity.Netcode;
 public class GameHandler : MonoBehaviour
 {
 
-    private DataBase dataBase;
-    private Team Police;
-    private Team Mob;
-    public Player Matt;
-    public Player Leo;
+    private static DataBase dataBase;
+    private static Team Police;
+    private static Team Mob;
+    public static Player Matt;
+    public static Player Leo;
     //public PlayerScreenManager MattScreen;
     //public PlayerScreenManager LeoScreen;
-    public string OutputMessageLeo;
-    public string OutputMessageMatt;
-    public string OutputTextLeo;
-    public string OutputTextMatt;
+    public static string OutputMessageLeo;
+    public static string OutputMessageMatt;
+    public static string OutputTextLeo;
+    public static string OutputTextMatt;
 
-    public bool errorFlag;
-    public bool currentOpFinished;
-    public Operation currentOP;
-    public int currentOPIndex;
-    private Operation[] operations;
+    public static bool errorFlag;
+    public static bool currentOpFinished;
+    public static Operation currentOP;
+    public static int currentOPIndex;
+    private static Operation[] operations;
     private static bool gameStart;
 
     // Start is called before the first frame update
@@ -97,14 +97,14 @@ public class GameHandler : MonoBehaviour
 
             if (gameStart)
             {
-                if (playerScreen.PlayerID == LeoScreen)
+                if (playerScreen.PlayerID == "LeoScreen")
                 {
-                    Leo.Command = playerScreen.Screen.InputField.text;
+                    Leo.Command = playerScreen.InputField.text;
                     Leo.IsReady = true;
                 }
-                else if (playerScreen.PlayerID == MattScreen)
+                else if (playerScreen.PlayerID == "MattScreen")
                 {
-                    Matt.Command = playerScreen.Screen.InputField.text;
+                    Matt.Command = playerScreen.InputField.text;
                     Matt.IsReady = true;
                 }
 
@@ -117,15 +117,15 @@ public class GameHandler : MonoBehaviour
 
 
             //update output
-            if (playerScreen == LeoScreen)
+            if (playerScreen.PlayerID == "LeoScreen")
             {
-                playerScreen.Screen.OutputMessage.text = Leo.OutputMessageBuffer;
-                playerScreen.Screen.OutputText.text = Leo.OutputTextBuffer;
+                playerScreen.OutputMessage.text = Leo.OutputMessageBuffer;
+                playerScreen.OutputText.text = Leo.OutputTextBuffer;
             }
-            else if (playerScreen == MattScreen)
+            else if (playerScreen.PlayerID == "MattScreen")
             {
-                playerScreen.Screen.OutputMessage.text = Matt.OutputMessageBuffer;
-                playerScreen.Screen.OutputText.text = Matt.OutputTextBuffer;
+                playerScreen.OutputMessage.text = Matt.OutputMessageBuffer;
+                playerScreen.OutputText.text = Matt.OutputTextBuffer;
             }
 
         }
@@ -141,7 +141,7 @@ public class GameHandler : MonoBehaviour
     }
 
     // Update is called once per frame
-    void TryUpdate()
+    static void TryUpdate()
     {
         //if (gameStart)
         //{
@@ -181,7 +181,7 @@ public class GameHandler : MonoBehaviour
             }
         //}
     }
-    void ManageTurn(Player currentPlayer) //implement later!!!!!
+    static void ManageTurn(Player currentPlayer) //implement later!!!!!
     {
         currentPlayer.IsReady = false;
         int split;
@@ -464,11 +464,11 @@ public class GameHandler : MonoBehaviour
     {
         //Pull from database:
 
-        this.Police.Actors = dataBase.stationActors;
-        this.Police.Boss = dataBase.Pboss;
+        Police.Actors = dataBase.stationActors;
+        Police.Boss = dataBase.Pboss;
 
-        this.Mob.Actors = dataBase.mobActors;
-        this.Mob.Boss = dataBase.Mboss;
+        Mob.Actors = dataBase.mobActors;
+        Mob.Boss = dataBase.Mboss;
     }
 
     void getOps() //all the ops in chronological order

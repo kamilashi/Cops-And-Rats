@@ -40,10 +40,11 @@ public class GameHandler : MonoBehaviour
 
         operations = new Operation[6];
         getOps();
-        Debug.Log(printOps());
+        //Debug.Log(printOps());
         //1st op: Deal, both have intel
         currentOPIndex = 0;
         currentOP = operations[currentOPIndex];
+        currentOPIndex++;
         currentOP.EnemyHasIntel = true;
         errorFlag = false;
         currentOpFinished = false;
@@ -71,15 +72,24 @@ void Start()
         if ((Matt.IsReady) && (Leo.IsReady) && (!errorFlag))  
         {
             //end of each input here
-            if (currentOpFinished) { currentOP = operations[++currentOPIndex]; currentOpFinished = false; } //if the flag is up - next op
-            if (!Leo.Wait) {                //Add multithresd?
+            if (currentOpFinished) {
+                if (currentOPIndex < 10)
+                {
+                    Debug.Log(operations[currentOPIndex].ToString());
+                    currentOP = operations[currentOPIndex++]; }
+                else { currentOPIndex = 0; }     //loop
+                 
+                
+                currentOpFinished = false; } //if the flag is up - next op
+            if ((!Leo.Wait)||((Leo.Wait) &&(Matt.Wait))) {                //Add multithresd?
                 ManageTurn(Leo);
                 if (Leo.EndTurn)
                 { Leo.EndTurn = false; Matt.Wait = false; }
             } 
-            if (!Matt.Wait) { ManageTurn(Matt); if (Matt.EndTurn)
+            if ((!Matt.Wait)|| ((Leo.Wait) && (Matt.Wait))) { ManageTurn(Matt); if (Matt.EndTurn)
                 { Matt.EndTurn = false; Leo.Wait = false; }
             }
+
         }
         
     }

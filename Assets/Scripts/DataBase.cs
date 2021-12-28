@@ -67,8 +67,8 @@ public class DataBase
         //Deals
         DealOps = new Operation[3];
         Operation operationD0 = new Operation(5,5, 11111, 0);
-        Operation operationD1 = new Operation(3, 3, 12222, 0);
-        Operation operationD2 = new Operation(3, 3, 14444, 0);
+        Operation operationD1 = new Operation(4, 4, 12222, 0);
+        Operation operationD2 = new Operation(5, 5, 14444, 0);
         DealOps[0] = operationD0;
         DealOps[1] = operationD1;
         DealOps[2] = operationD2;
@@ -84,9 +84,9 @@ public class DataBase
 
         //Raids
         RaidOps = new Operation[3];
-        Operation operationR0 = new Operation(3, 3, 13333, 1);
+        Operation operationR0 = new Operation(4, 4, 13333, 1);
         Operation operationR1 = new Operation(3, 3, 15555, 1);
-        Operation operationR2 = new Operation(3, 3, 16666, 1);
+        Operation operationR2 = new Operation(5, 5, 16666, 1);
         RaidOps[0] = operationR0;
         RaidOps[1] = operationR1;
         RaidOps[2] = operationR2;

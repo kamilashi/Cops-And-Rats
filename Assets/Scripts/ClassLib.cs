@@ -134,7 +134,7 @@ public class Team
                 ActorsVisInvis[randomIndex] = swap;
             }
         }
-        Debug.Log("Shuffeled list:");
+       // Debug.Log("Shuffeled list:");
         foreach (int index in ActorsVisInvis)
         {
             Debug.Log(index);
